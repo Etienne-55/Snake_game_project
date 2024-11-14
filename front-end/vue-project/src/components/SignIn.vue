@@ -1,25 +1,23 @@
 <template>
-    <div>
-      <h2>Sign Up</h2>
-      <form @submit.prevent="signup">
-        <input v-model="email" type="email" placeholder="Email" required /><br><br>
+  <div class="signup-container">
+    <h2>Sign Up</h2>
+    <form @submit.prevent="signup" class="signup-form">
+      <input v-model="email" type="email" placeholder="Email" required /><br />
+      <input v-model="password" type="password" placeholder="Password" required /><br />
+      <input v-model="confirmPassword" type="password" placeholder="Confirm Password" required /><br />
+      <button type="submit">Sign Up</button>
+    </form>
 
-        <input v-model="password" type="password" placeholder="Password" required /><br><br>
+    <p v-if="message" class="message">{{ message }}</p>
 
-        <input v-model="confirmPassword" type="password" placeholder="Confirm Password" required /><br><br>
+    <button @click="goBack" class="back-button">Go back</button>
+  </div>
+</template>
 
-        <button type="submit">Sign Up</button><br><br>
-      </form>
-      <p v-if="message">{{ message }}</p>
+<script>
+import axios from 'axios';
 
-      <button @click="goBack">Go back</button>
-    </div>
-  </template>
-  
-  <script>
-  import axios from 'axios';
-
-  function getCookie(name) {
+function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
     const cookies = document.cookie.split(';');
@@ -34,17 +32,16 @@
   return cookieValue;
 }
 
-  export default {
-    data() {
-      return {
-        email: '',
-        password: '',
-        confirmPassword: '',
-        message: ''
-      };
-    },
+export default {
+  data() {
+    return {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      message: ''
+    };
+  },
   methods: {
-
     goBack() {
       this.$router.push('/');
     },
@@ -70,3 +67,64 @@
   }
 };
 </script>
+
+<style scoped>
+.signup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+  text-align: center;
+}
+
+h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.signup-form input {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button[type="submit"] {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+button[type="submit"]:hover {
+  background-color: #218838;
+}
+
+.message {
+  color: #e74c3c;
+  margin-top: 15px;
+}
+
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  color: #333;
+  background-color: #f1f1f1;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #ddd;
+}
+</style>
