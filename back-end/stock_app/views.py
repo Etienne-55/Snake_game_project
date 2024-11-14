@@ -62,11 +62,11 @@ def login(request):
 
 class HelloWorld(APIView):
     def get(self, request):
-        return Response({"message": "Log-in or sign-in!! :)"}, status=status.HTTP_200_OK)
+        return Response({"message": "Welcome to the snake game :)"}, status=status.HTTP_200_OK)
 
 class Hello(APIView):
     def get(self, request):
-        return Response({"message": "Hell0"}, status=status.HTTP_200_OK)
+        return Response({"message": "Game menu."}, status=status.HTTP_200_OK)
 
 class CoffeeViewSet(viewsets.ModelViewSet):
     queryset = Coffee.objects.all()

@@ -1,17 +1,10 @@
 <template>
     <div>
       <h1>{{ hello }}</h1><br><br>
-      
-      <button @click="goToMenu">Return to login</button>
-      <h1>Coffees</h1>
-    <ul>
-      <li v-for="coffee in coffees" :key="coffee.id">
-        {{ coffee.name }} - {{ coffee.origin }} - {{ coffee.roast }}
-        <button @click="editCoffee(coffee.id)">Edit</button>
-        <button @click="deleteCoffee(coffee.id)">Delete</button>
-      </li>
-    </ul>
-    <router-link to="/coffee/new">Add Coffee</router-link>
+    <router-link to="/coffee/new">Start game</router-link><br><br>
+
+    <button @click="goToMenu">Return to login</button>
+
     </div>
   </template>
   
