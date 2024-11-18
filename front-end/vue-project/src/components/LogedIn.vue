@@ -1,10 +1,32 @@
 <template>
   <div class="game-container">
-    <h1>{{ hello }}</h1><br /><br />
+    <h1>{{ hello }}</h1>
+    <br /><br />
 
-    <router-link to="/coffee/new" class="start-game-button">Start game</router-link><br /><br />
+    <!-- Start Game Button -->
+    <router-link to="/coffee/new" class="start-game-button">Start Game</router-link>
+    <br /><br />
 
-    <button @click="goToMenu" class="return-button">Return to login</button>
+    <!-- Leaderboard Section -->
+    <h2>Leaderboard</h2>
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Highest Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="user in leaderboard" :key="user.username">
+          <td>{{ user.username }}</td>
+          <td>{{ user.highest_score }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <br />
+
+    <!-- Return Button -->
+    <button @click="goToMenu" class="return-button">Return to Login</button>
   </div>
 </template>
 
@@ -14,12 +36,13 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      hello: '',     
-      coffees: [],
+      hello: '',
+      leaderboard: [], // To store leaderboard data
     };
   },
   created() {
     this.fetchHello();
+    this.fetchLeaderboard();
   },
   methods: {
     async fetchHello() {
@@ -32,33 +55,38 @@ export default {
         this.hello = data.message;
       } catch (error) {
         console.error('Error fetching HelloWorld message:', error);
-        this.errorMessage = 'Error loading HelloWorld message';
       }
     },
-    
+    async fetchLeaderboard() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/leaderboard/');
+        this.leaderboard = response.data.leaderboard;
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    },
+    async updateScore(score) {
+      try {
+        const userId = this.getUserId();  // You'll need to implement this to get the logged-in user ID
+        const response = await axios.post(`http://127.0.0.1:8000/update_score/${userId}/${score}/`);
+        if (response.data.status === 'success') {
+          console.log('Score updated successfully');
+          this.fetchLeaderboard();  // Refetch leaderboard after updating the score
+        }
+      } catch (error) {
+        console.error('Error updating score:', error);
+      }
+    },
+
+    // Example of where you'd call updateScore in your game logic
+    gameOver(score) {
+      this.updateScore(score);  // Pass the final score
+    },
+
     goToMenu() {
       this.$router.push('/');
     },
-
-    fetchCoffees() {
-      axios.get('/api/coffee/')
-        .then(response => { this.coffees = response.data; })
-        .catch(error => { console.error(error); });
-    },
-
-    deleteCoffee(id) {
-      axios.delete(`/api/coffee/${id}/`)
-        .then(() => { this.fetchCoffees(); })
-        .catch(error => { console.error(error); });
-    },
-
-    editCoffee(id) {
-      this.$router.push(`/coffee/${id}/edit`);
-    }
   },
-  mounted() {
-    this.fetchCoffees();
-  }
 };
 </script>
 
@@ -76,6 +104,34 @@ export default {
 h1 {
   color: #333;
   margin-bottom: 20px;
+}
+
+h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.leaderboard {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.leaderboard th,
+.leaderboard td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.leaderboard th {
+  background-color: #007bff;
+  color: white;
+}
+
+.leaderboard td {
+  background-color: #f9f9f9;
 }
 
 .start-game-button {

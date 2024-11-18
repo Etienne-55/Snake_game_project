@@ -3,7 +3,6 @@
     <h2>Snake Game</h2>
     <p>Score: {{ score }}</p>
     <canvas id="gameCanvas" width="400" height="400" style="border:1px solid #000"></canvas>
-    
     <div class="button-container">
       <button @click="replayGame" v-if="gameOver">Replay</button>
       <button @click="returnToGameMenu" class="return-button" v-if="gameOver">Return to Game Menu</button>
@@ -12,6 +11,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -44,7 +45,7 @@ export default {
       document.addEventListener('keydown', this.setDirection);
 
       const collision = (head, array) => {
-        return array.some(segment => head.x === segment.x && head.y === segment.y);
+        return array.some((segment) => head.x === segment.x && head.y === segment.y);
       };
 
       const draw = () => {
@@ -71,7 +72,7 @@ export default {
           this.score++;
           this.food = {
             x: Math.floor(Math.random() * 19 + 1) * box,
-            y: Math.floor(Math.random() * 19 + 1) * box
+            y: Math.floor(Math.random() * 19 + 1) * box,
           };
         } else {
           this.snake.pop();
@@ -89,6 +90,7 @@ export default {
           clearInterval(this.game);
           this.gameOver = true;
           document.removeEventListener('keydown', this.setDirection);
+          this.updateScore(); // Update score when game is over
         } else {
           this.snake.unshift(newHead);
         }
@@ -107,53 +109,26 @@ export default {
       this.startGame();
     },
     returnToGameMenu() {
-      this.$router.push('/logedin'); 
+      this.$router.push('/logedin');
+    },
+    async updateScore() {
+      try {
+        const token = localStorage.getItem('auth_token'); // Retrieve the auth token
+        const response = await axios.post('http://127.0.0.1:8000/update-score/', {
+          score: this.score,
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Send the token for authentication
+          },
+        });
+
+        if (response.status === 200) {
+          console.log('Score updated successfully');
+        }
+      } catch (error) {
+        console.error('Error updating score:', error);
+      }
     }
-  },
-  beforeUnmount() {
-    if (this.game) clearInterval(this.game);
-    document.removeEventListener('keydown', this.setDirection);
   }
-};
+}
 </script>
-
-<style scoped>
-.game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 100vh;
-}
-
-h2 {
-  color: #333;
-}
-
-.button-container {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-button {
-  padding: 10px 20px;
-  font-size: 1em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #ddd;
-}
-
-.return-button {
-  background-color: #f1f1f1;
-}
-
-.return-button:hover {
-  background-color: #ddd;
-}
-</style>
