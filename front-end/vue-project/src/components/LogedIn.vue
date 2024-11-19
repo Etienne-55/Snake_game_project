@@ -3,11 +3,9 @@
     <h1>{{ hello }}</h1>
     <br /><br />
 
-    <!-- Start Game Button -->
     <router-link to="/coffee/new" class="start-game-button">Start Game</router-link>
     <br /><br />
 
-    <!-- Leaderboard Section -->
     <h2>Leaderboard</h2>
     <table class="leaderboard">
       <thead>
@@ -25,7 +23,6 @@
     </table>
     <br />
 
-    <!-- Return Button -->
     <button @click="goToMenu" class="return-button">Return to Login</button>
   </div>
 </template>
@@ -37,7 +34,7 @@ export default {
   data() {
     return {
       hello: '',
-      leaderboard: [], // To store leaderboard data
+      leaderboard: [],
     };
   },
   created() {
@@ -67,20 +64,19 @@ export default {
     },
     async updateScore(score) {
       try {
-        const userId = this.getUserId();  // You'll need to implement this to get the logged-in user ID
+        const userId = this.getUserId();
         const response = await axios.post(`http://127.0.0.1:8000/update_score/${userId}/${score}/`);
         if (response.data.status === 'success') {
           console.log('Score updated successfully');
-          this.fetchLeaderboard();  // Refetch leaderboard after updating the score
+          this.fetchLeaderboard();
         }
       } catch (error) {
         console.error('Error updating score:', error);
       }
     },
 
-    // Example of where you'd call updateScore in your game logic
     gameOver(score) {
-      this.updateScore(score);  // Pass the final score
+      this.updateScore(score); 
     },
 
     goToMenu() {

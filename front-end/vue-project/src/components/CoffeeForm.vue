@@ -1,134 +1,137 @@
 <template>
-  <div class="game-container">
-    <h2>Snake Game</h2>
-    <p>Score: {{ score }}</p>
-    <canvas id="gameCanvas" width="400" height="400" style="border:1px solid #000"></canvas>
-    <div class="button-container">
-      <button @click="replayGame" v-if="gameOver">Replay</button>
-      <button @click="returnToGameMenu" class="return-button" v-if="gameOver">Return to Game Menu</button>
-    </div>
+  <div>
+    <button @click="testPostMethod">Test POST Method</button>
+    <p>{{ message }}</p>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
-      score: 0,
-      gameOver: false,
-      game: null,
-      snake: [],
-      direction: null,
-      food: {},
+      message: '',
     };
   },
-  mounted() {
-    this.startGame();
-  },
+
   methods: {
-    startGame() {
-      this.score = 0;
-      this.gameOver = false;
-      this.snake = [{ x: 180, y: 200 }];
-      this.direction = null;
-      this.food = {
-        x: Math.floor(Math.random() * 19 + 1) * 20,
-        y: Math.floor(Math.random() * 19 + 1) * 20,
-      };
-
-      const canvas = document.getElementById('gameCanvas');
-      const ctx = canvas.getContext('2d');
-      const box = 20;
-
-      document.addEventListener('keydown', this.setDirection);
-
-      const collision = (head, array) => {
-        return array.some((segment) => head.x === segment.x && head.y === segment.y);
-      };
-
-      const draw = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < this.snake.length; i++) {
-          ctx.fillStyle = i === 0 ? 'green' : 'white';
-          ctx.fillRect(this.snake[i].x, this.snake[i].y, box, box);
-          ctx.strokeRect(this.snake[i].x, this.snake[i].y, box, box);
-        }
-
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.food.x, this.food.y, box, box);
-
-        let snakeX = this.snake[0].x;
-        let snakeY = this.snake[0].y;
-
-        if (this.direction === 'LEFT') snakeX -= box;
-        if (this.direction === 'UP') snakeY -= box;
-        if (this.direction === 'RIGHT') snakeX += box;
-        if (this.direction === 'DOWN') snakeY += box;
-
-        if (snakeX === this.food.x && snakeY === this.food.y) {
-          this.score++;
-          this.food = {
-            x: Math.floor(Math.random() * 19 + 1) * box,
-            y: Math.floor(Math.random() * 19 + 1) * box,
-          };
-        } else {
-          this.snake.pop();
-        }
-
-        let newHead = { x: snakeX, y: snakeY };
-
-        if (
-          snakeX < 0 ||
-          snakeY < 0 ||
-          snakeX >= canvas.width ||
-          snakeY >= canvas.height ||
-          collision(newHead, this.snake)
-        ) {
-          clearInterval(this.game);
-          this.gameOver = true;
-          document.removeEventListener('keydown', this.setDirection);
-          this.updateScore(); // Update score when game is over
-        } else {
-          this.snake.unshift(newHead);
-        }
-      };
-
-      if (this.game) clearInterval(this.game);
-      this.game = setInterval(draw, 100);
-    },
-    setDirection(event) {
-      if (event.keyCode === 37 && this.direction !== 'RIGHT') this.direction = 'LEFT';
-      else if (event.keyCode === 38 && this.direction !== 'DOWN') this.direction = 'UP';
-      else if (event.keyCode === 39 && this.direction !== 'LEFT') this.direction = 'RIGHT';
-      else if (event.keyCode === 40 && this.direction !== 'UP') this.direction = 'DOWN';
-    },
-    replayGame() {
-      this.startGame();
-    },
-    returnToGameMenu() {
-      this.$router.push('/logedin');
-    },
-    async updateScore() {
+    async testPostMethod() {
       try {
-        const token = localStorage.getItem('auth_token'); // Retrieve the auth token
-        const response = await axios.post('http://127.0.0.1:8000/update-score/', {
-          score: this.score,
-        }, {
+        const token = this.getToken();
+        if (!token) {
+          this.message = 'No token found!';
+          return;
+        }
+
+        const response = await fetch('http://127.0.0.1:8000/update-score/', {
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`, // Send the token for authentication
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.getCookie('csrftoken'), 
+            'Authorization': `Bearer ${token}`, 
           },
+          body: JSON.stringify({ score: 10 }),
         });
 
-        if (response.status === 200) {
-          console.log('Score updated successfully');
+        if (response.ok) {
+          this.message = 'Score updated successfully!';
+        } else if (response.status === 401) {
+          console.log('Token expired, attempting to refresh...');
+          const refreshResponse = await this.refreshToken();
+
+          if (refreshResponse) {
+            const newToken = this.getToken();
+            const retryResponse = await fetch('http://127.0.0.1:8000/update-score/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCookie('csrftoken'), 
+                'Authorization': `Bearer ${newToken}`,  
+              },
+              body: JSON.stringify({ score: 10 }), 
+            });
+
+            if (retryResponse.ok) {
+              this.message = 'Score updated successfully with new token!';
+            } else {
+              const errorData = await retryResponse.json();
+              this.message = `Error: ${errorData.message || 'Unknown error'}`;
+            }
+          } else {
+            this.message = 'Failed to refresh token!';
+          }
+        } else {
+          const data = await response.json();
+          this.message = `Error: ${data.message || 'Something went wrong'}`;
         }
       } catch (error) {
-        console.error('Error updating score:', error);
+        console.error('Error:', error);
+        this.message = 'An error has occurred';
       }
-    }
-  }
-}
+    },
+
+    getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    },
+
+    getToken() {
+      return localStorage.getItem('authToken');
+    },
+
+    getRefreshToken() {
+      return localStorage.getItem('refreshToken');  
+    },
+
+   
+    async refreshToken() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/token/refresh/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refresh: this.getRefreshToken() }),  
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('authToken', data.access);  
+          localStorage.setItem('refreshToken', data.refresh);  
+          return true;
+        } else {
+          console.error('Failed to refresh token');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        return false;
+      }
+    },
+  },
+};
 </script>
+
+<style scoped>
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+</style>

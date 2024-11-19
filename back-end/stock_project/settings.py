@@ -27,6 +27,12 @@ DEBUG = True
 
 DEBUG_PROPAGATE_EXCEPTIONS = True
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
 
 ALLOWED_HOSTS = []
 
@@ -42,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'stock_app',
+    'rest_framework.authtoken', 
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 ]
 
@@ -137,3 +145,5 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8080', 
     'http://127.0.0.1:8080',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True

@@ -7,13 +7,21 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as auth_login
 from django.http import JsonResponse
 from .models import Profile, Score
-from .serializers import ScoreSerializer, CoffeeSerializer
+from .serializers import ScoreSerializer, ProfileSerializer
 import json
 from rest_framework import viewsets
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+import json
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+import json
+from django.views.decorators.csrf import csrf_exempt
 
 
-# Sign up endpoint
 @csrf_exempt
 def signin(request):
     if request.method == 'POST':
@@ -30,7 +38,6 @@ def signin(request):
                 if User.objects.filter(username=email).exists():
                     return JsonResponse({"message": "User already exists"}, status=400)
                 user = User.objects.create_user(username=email, email=email, password=password)
-                # Create a Profile for the user
                 Profile.objects.create(user=user)
                 return JsonResponse({"message": "User registered successfully"}, status=201)
             else:
@@ -42,7 +49,6 @@ def signin(request):
     return JsonResponse({"message": "Invalid method"}, status=405)
 
 
-# Login endpoint
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
@@ -56,8 +62,14 @@ def login(request):
 
             user = authenticate(username=email, password=password)
             if user is not None:
-                auth_login(request, user)
-                return JsonResponse({"message": "Login successful"}, status=200)
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token) 
+
+                return JsonResponse({
+                    "message": "Login successful",
+                    "access_token": access_token,
+                    "refresh_token": str(refresh)
+                }, status=200)
             else:
                 return JsonResponse({"message": "Invalid credentials"}, status=401)
         except json.JSONDecodeError:
@@ -65,36 +77,30 @@ def login(request):
         except Exception as e:
             return JsonResponse({"message": f"Server error: {str(e)}"}, status=500)
     return JsonResponse({"message": "Invalid method"}, status=405)
-
-
-# HelloWorld endpoint
 class HelloWorld(APIView):
     def get(self, request):
         return Response({"message": "Welcome to the snake game :)"}, status=status.HTTP_200_OK)
 
 
-# Hello endpoint
 class Hello(APIView):
     def get(self, request):
         return Response({"message": "Game menu."}, status=status.HTTP_200_OK)
 
-# Update score endpoint (new logic for the click counter game)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_score(request):
     click_count = request.data.get('click_count')
     
     if click_count is not None and click_count > 0:
-        # Get or create a score record for the user
         score, created = Score.objects.get_or_create(user=request.user)
-        score.score += click_count  # Add the click count to the score
+        score.score += click_count 
         score.save()
         return Response({"message": "Score updated successfully!"}, status=status.HTTP_200_OK)
     
     return Response({"error": "Invalid click count data!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# LeaderboardView to display leaderboard
 class LeaderboardView(APIView):
     def get(self, request):
         try:
@@ -108,7 +114,57 @@ class LeaderboardView(APIView):
             return Response({"message": f"Server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# LeaderboardViewSet to manage leaderboard with score ordering
 class LeaderboardViewSet(viewsets.ModelViewSet):
-    queryset = Score.objects.all().order_by('-score')  # Order by score in descending order
+    queryset = Score.objects.all().order_by('-score') 
     serializer_class = ScoreSerializer
+
+
+
+@csrf_exempt
+def update_score(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            score = data.get('score') 
+            
+            if not score:
+                return JsonResponse({"message": "Score is required!"}, status=400)
+            
+            
+            return JsonResponse({"message": "Score updated successfully!"}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse({"message": f"Server error: {str(e)}"}, status=500)
+    return JsonResponse({"message": "Invalid method"}, status=405)
+
+
+class UpdateScoreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        score = request.data.get('score')
+        if score is not None:
+            user = request.user
+            leaderboard, created = Score.objects.get_or_create(user=user)
+            leaderboard.score = score
+            leaderboard.save()
+            return Response({"message": "Score updated"}, status=status.HTTP_200_OK)
+        return Response({"message": "Invalid score"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LeaderboardViewSet(viewsets.ModelViewSet):
+    queryset = Score.objects.all().order_by('-score') 
+    serializer_class = ScoreSerializer 
+    permission_classes = [IsAuthenticated]
+
+class ScoreViewSet(viewsets.ModelViewSet):
+    queryset = Score.objects.all().order_by('-score') 
+    serializer_class = ScoreSerializer 
+    permission_classes = [IsAuthenticated] 
+
+class LeaderboardView(APIView):
+    def get(self, request):
+        profiles = Profile.objects.order_by('-highest_score')[:10]
+        serializer = ProfileSerializer(profiles, many=True)
+        return Response({"leaderboard": serializer.data})

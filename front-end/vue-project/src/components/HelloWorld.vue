@@ -21,10 +21,10 @@
 export default {
   data() {
     return {
-      helloMessage: '',    
-      email: '',     
+      helloMessage: '',
+      email: '',
       password: '',
-      message: ''     
+      message: ''
     };
   },
   created() {
@@ -44,11 +44,11 @@ export default {
         this.message = 'Error loading HelloWorld message';
       }
     },
-    
+
     goToSignIn() {
       this.$router.push('/sign-in');
     },
-    
+
     async login() {
       try {
         const response = await fetch('http://127.0.0.1:8000/login/', {
@@ -64,17 +64,22 @@ export default {
         });
 
         if (response.ok) {
-          this.$router.push('/logedin');
+          const data = await response.json();
+
+          localStorage.setItem('authToken', data.access_token); 
+          localStorage.setItem('refreshToken', data.refresh_token);
+
+          this.$router.push('/logedin'); 
         } else {
-          const data = await response.text();
-          this.message = data;
+          const data = await response.json();
+          this.message = `Login failed: ${data.message}`;
         }
       } catch (error) {
         console.error('Error:', error);
         this.message = 'An error has occurred';
       }
     },
-    
+
     getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
@@ -90,7 +95,7 @@ export default {
       return cookieValue;
     }
   }
-}
+};
 </script>
 
 <style scoped>
