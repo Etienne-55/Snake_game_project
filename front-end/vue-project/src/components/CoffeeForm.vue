@@ -2,6 +2,14 @@
   <div>
     <button @click="testPostMethod">Test POST Method</button>
     <p>{{ message }}</p>
+    <div v-if="leaderboard.length > 0">
+      <h3>Leaderboard</h3>
+      <ul>
+        <li v-for="(user, index) in leaderboard" :key="index">
+          {{ user.username }}: {{ user.highest_score }}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -10,6 +18,7 @@ export default {
   data() {
     return {
       message: '',
+      leaderboard: [],
     };
   },
 
@@ -29,11 +38,12 @@ export default {
             'X-CSRFToken': this.getCookie('csrftoken'), 
             'Authorization': `Bearer ${token}`, 
           },
-          body: JSON.stringify({ score: 10 }),
+          body: JSON.stringify({ click_count: 1 }), // Increment score by 1
         });
 
         if (response.ok) {
           this.message = 'Score updated successfully!';
+          this.fetchLeaderboard(); // Refresh leaderboard after updating score
         } else if (response.status === 401) {
           console.log('Token expired, attempting to refresh...');
           const refreshResponse = await this.refreshToken();
@@ -47,11 +57,12 @@ export default {
                 'X-CSRFToken': this.getCookie('csrftoken'), 
                 'Authorization': `Bearer ${newToken}`,  
               },
-              body: JSON.stringify({ score: 10 }), 
+              body: JSON.stringify({ click_count: 1 }), 
             });
 
             if (retryResponse.ok) {
               this.message = 'Score updated successfully with new token!';
+              this.fetchLeaderboard(); // Refresh leaderboard
             } else {
               const errorData = await retryResponse.json();
               this.message = `Error: ${errorData.message || 'Unknown error'}`;
@@ -66,6 +77,18 @@ export default {
       } catch (error) {
         console.error('Error:', error);
         this.message = 'An error has occurred';
+      }
+    },
+
+    async fetchLeaderboard() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/leaderboard/');
+        if (response.ok) {
+          const data = await response.json();
+          this.leaderboard = data.leaderboard;
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
       }
     },
 
@@ -92,7 +115,6 @@ export default {
       return localStorage.getItem('refreshToken');  
     },
 
-   
     async refreshToken() {
       try {
         const response = await fetch('http://127.0.0.1:8000/api/token/refresh/', {
@@ -118,11 +140,14 @@ export default {
       }
     },
   },
+  
+  mounted() {
+    this.fetchLeaderboard(); // Fetch leaderboard when component mounts
+  },
 };
 </script>
 
 <style scoped>
-
 button {
   padding: 10px 20px;
   background-color: #4CAF50;

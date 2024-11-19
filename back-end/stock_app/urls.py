@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from .views import HelloWorld, signin, login, Hello, update_score, LeaderboardViewSet
+from .views import LeaderboardView
 
 router = DefaultRouter()
 router.register(r'score', LeaderboardViewSet) 
@@ -11,5 +12,6 @@ urlpatterns = [
     path('signin/', signin, name='signin'),
     path('hello/', Hello.as_view(), name='hello'),
     path('api/', include(router.urls)), 
+    path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
     path('update-score/', update_score, name='update_score'),
 ]

@@ -10,7 +10,7 @@ class Profile(models.Model):
 
 class Score(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    score = models.IntegerField()
+    score = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.user.username} - {self.score}"

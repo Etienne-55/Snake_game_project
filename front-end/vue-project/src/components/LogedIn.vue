@@ -54,14 +54,16 @@ export default {
         console.error('Error fetching HelloWorld message:', error);
       }
     },
+
     async fetchLeaderboard() {
       try {
         const response = await axios.get('http://127.0.0.1:8000/leaderboard/');
-        this.leaderboard = response.data.leaderboard;
+        this.leaderboard = response.data.leaderboard; // Ensure this matches the response structure
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
       }
     },
+
     async updateScore(score) {
       try {
         const userId = this.getUserId();
@@ -80,7 +82,7 @@ export default {
     },
 
     goToMenu() {
-      this.$router.push('/');
+      this.$router.push('/'); // Return to the login page
     },
   },
 };
