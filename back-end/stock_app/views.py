@@ -77,33 +77,51 @@ class Hello(APIView):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_score(request):
-    click_count = request.data.get('click_count')
+    try:
+        # Fetch the score from the request data
+        score = request.data.get('score')
 
-    if click_count is not None and click_count > 0:
-        score, created = Score.objects.get_or_create(user=request.user)  
-        score.score += click_count
-        score.save()
+        if score is not None and isinstance(score, int) and score >= 0:
+            # Get or create the user's score object
+            score_entry, created = Score.objects.get_or_create(user=request.user)
+            score_entry.score = score
+            score_entry.save()
 
-       
-        profile = Profile.objects.get(user=request.user)
-        if score.score > profile.highest_score:
-            profile.highest_score = score.score
-            profile.save()
+            # Update the user's profile highest score if needed
+            profile = Profile.objects.get(user=request.user)
+            if score > profile.highest_score:
+                profile.highest_score = score
+                profile.save()
 
-        return Response({"message": "Score updated successfully!"}, status=status.HTTP_200_OK)
-    
-    return Response({"error": "Invalid click count data!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "message": "Score updated successfully!",
+                "score": score_entry.score,
+                "highest_score": profile.highest_score
+            }, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Invalid score data!"}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": f"Server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class LeaderboardView(APIView):
     def get(self, request):
         try:
-            profiles = Profile.objects.order_by('-highest_score')[:10]
+            profiles = Profile.objects.select_related('user').order_by('-highest_score')[:10]
+            
             leaderboard = [
-                {"username": profile.user.username, "highest_score": profile.highest_score}
+                {
+                    "username": profile.user.username,
+                    "highest_score": profile.highest_score
+                }
                 for profile in profiles
             ]
+            
             return Response({"leaderboard": leaderboard}, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({"leaderboard": [], "message": "No profiles found."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"Server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class LeaderboardViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all().order_by('-score')
