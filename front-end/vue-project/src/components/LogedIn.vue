@@ -82,7 +82,7 @@ export default {
     },
 
     goToMenu() {
-      this.$router.push('/'); // Return to the login page
+      this.$router.push('/'); 
     },
   },
 };

@@ -30,9 +30,3 @@ EXPOSE 8000
 
 # Run migrations and then start the server
 CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
-
-
-#How to run
-#docker build -t mydjangoapp .
-#docker run -p 8000:8000 mydjangoapp
-#then enter http://localhost:8000

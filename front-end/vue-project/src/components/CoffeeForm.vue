@@ -7,18 +7,30 @@
       style="border: 1px solid black;"
     ></canvas>
 
-    <p>Score: {{ score }}</p>
+    <div class="scoreboard">
+      <p>Score: <span class="score">{{ score }}</span></p>
+    </div>
 
-    <div v-if="leaderboard.length > 0">
+    <!-- Leaderboard (Only display after game over) -->
+    <div v-if="gameOver">
       <h3>Leaderboard</h3>
       <ul>
         <li v-for="(user, index) in leaderboard" :key="index">
-          {{ user.username }}: {{ user.highest_score }}
+          {{ user.username }}: <strong>{{ user.highest_score }}</strong>
         </li>
       </ul>
     </div>
 
-    <button v-if="gameOver" @click="startGame">Replay</button>
+    <!-- Countdown -->
+    <div v-if="showCountdown" class="countdown">
+      <p>Get Ready: {{ countdown }}</p>
+    </div>
+
+    <!-- Replay and Go to Menu buttons -->
+    <div v-if="gameOver">
+      <button @click="startGame">Replay</button>
+      <button @click="goToMenu">Go to Menu</button>
+    </div>
   </div>
 </template>
 
@@ -30,42 +42,51 @@ export default {
       leaderboard: [],
       snake: [{ x: 5, y: 5 }],
       food: { x: 10, y: 10 },
-      blackSquares: [],  
+      blackSquares: [],
       direction: 'RIGHT',
       gameInterval: null,
       gridSize: 20,
       gridCount: 20,
       foodsEaten: 0,
       gameOver: false,
-      blackSquareSpawned: false,  
+      blackSquareSpawned: false,
+      showCountdown: false,
+      countdown: 2,
     };
   },
 
   methods: {
-    
     startGame() {
       this.score = 0;
       this.snake = [{ x: 5, y: 5 }];
       this.food = { x: 10, y: 10 };
-      this.blackSquares = []; 
+      this.blackSquares = [];
       this.direction = 'RIGHT';
       this.foodsEaten = 0;
       this.gameOver = false;
       this.blackSquareSpawned = false;
-
+      this.showCountdown = true;
+      this.countdown = 2;
 
       this.spawnInitialBlackSquares();
 
       const canvas = document.getElementById('snakeGame');
       const ctx = canvas.getContext('2d');
 
-      this.gameInterval = setInterval(() => {
-        this.updateGame(ctx);
-      }, 75);
+      const countdownInterval = setInterval(() => {
+        if (this.countdown > 0) {
+          this.countdown--;
+        } else {
+          clearInterval(countdownInterval);
+          this.showCountdown = false;
+          this.gameInterval = setInterval(() => {
+            this.updateGame(ctx);
+          }, 100);
+        }
+      }, 1000);
 
       window.addEventListener('keydown', this.changeDirection);
     },
-
 
     updateGame(ctx) {
       this.moveSnake();
@@ -156,10 +177,24 @@ export default {
     },
 
     spawnFood() {
-      this.food = {
-        x: Math.floor(Math.random() * this.gridCount),
-        y: Math.floor(Math.random() * this.gridCount),
-      };
+      let validPosition = false;
+      let newFood;
+
+      while (!validPosition) {
+        newFood = {
+          x: Math.floor(Math.random() * this.gridCount),
+          y: Math.floor(Math.random() * this.gridCount),
+        };
+
+        const onBlackSquare = this.blackSquares.some(square => square.x === newFood.x && square.y === newFood.y);
+        const onSnake = this.snake.some(segment => segment.x === newFood.x && segment.y === newFood.y);
+
+        if (!onBlackSquare && !onSnake) {
+          validPosition = true;
+        }
+      }
+
+      this.food = newFood;
     },
 
     spawnBlackSquare() {
@@ -240,6 +275,10 @@ export default {
     getToken() {
       return localStorage.getItem('authToken');
     },
+
+    goToMenu() {
+      this.$router.push('/'); 
+    },
   },
 
   mounted() {
@@ -255,23 +294,35 @@ canvas {
   display: block;
 }
 
-p {
-  font-size: 20px;
+.scoreboard {
+  text-align: center;
+  font-size: 24px;
+  margin: 10px 0;
+}
+
+.score {
+  font-weight: bold;
+  color: #ff5722;
+}
+
+.leaderboard {
+  margin: 20px auto;
   text-align: center;
 }
 
+.countdown {
+  text-align: center;
+  font-size: 30px;
+  color: #ff5722;
+}
+
 button {
-  display: block;
-  margin: 20px auto;
-  padding: 10px 20px;
+  margin: 10px;
+  padding: 10px;
   font-size: 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: #f0f0f0;
 }
 </style>

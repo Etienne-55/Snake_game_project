@@ -1,49 +1,28 @@
+version: '3.8'
+
 services:
-  service-front:
+  snake-front:
     build:
-      context: ./
+      context: ./ 
       dockerfile: front-end/vue-project/dockerfile
-    container_name: vue-app
+    container_name: snake-front
     ports:
       - "8080:8080"
     networks:
       - app_network
 
-  service-back:
+  snake-back:
     build:
-      context: ./
+      context: ./ 
       dockerfile: back-end/Dockerfile
-    container_name: django_app_container
+    container_name: snake-back
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      - DATABASE_NAME=djangoproject
-      - DATABASE_USER=etienne
-      - DATABASE_PASSWORD=555
-      - DATABASE_HOST=db
-    networks:
-      - app_network
-
-  db:
-    image: mysql:8.0
-    container_name: mysql_db
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: djangoproject
-      MYSQL_USER: etienne
-      MYSQL_PASSWORD: 555
-    ports:
-      - "3306:3306"
     networks:
       - app_network
     volumes:
-      - db_data:/var/lib/mysql
+      - ./back-end/db.sqlite3:/app/db.sqlite3  
 
 networks:
   app_network:
     driver: bridge
-
-volumes:
-  db_data:
