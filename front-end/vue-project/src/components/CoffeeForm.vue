@@ -277,7 +277,7 @@ export default {
     },
 
     goToMenu() {
-      this.$router.push('/'); 
+      this.$router.push('/logedin'); 
     },
   },
 
