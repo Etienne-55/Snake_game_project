@@ -11,7 +11,6 @@
       <p>Score: <span class="score">{{ score }}</span></p>
     </div>
 
-    <!-- Leaderboard (Only display after game over) -->
     <div v-if="gameOver">
       <h3>Leaderboard</h3>
       <ul>
@@ -21,12 +20,10 @@
       </ul>
     </div>
 
-    <!-- Countdown -->
     <div v-if="showCountdown" class="countdown">
       <p>Get Ready: {{ countdown }}</p>
     </div>
 
-    <!-- Replay and Go to Menu buttons -->
     <div v-if="gameOver">
       <button @click="startGame">Replay</button>
       <button @click="goToMenu">Go to Menu</button>

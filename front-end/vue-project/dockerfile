@@ -1,20 +1,13 @@
-# Use an official Node.js runtime as a parent image
 FROM node:18-alpine
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
 COPY front-end/vue-project/package*.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application files to the working directory
 COPY front-end/vue-project/ ./
 
-# Expose port 8080 to the outside world
 EXPOSE 8080
 
-# Run the development server
 CMD ["npm", "run", "serve"]

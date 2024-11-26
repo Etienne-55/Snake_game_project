@@ -78,16 +78,13 @@ class Hello(APIView):
 @permission_classes([IsAuthenticated])
 def update_score(request):
     try:
-        # Fetch the score from the request data
         score = request.data.get('score')
 
         if score is not None and isinstance(score, int) and score >= 0:
-            # Get or create the user's score object
             score_entry, created = Score.objects.get_or_create(user=request.user)
             score_entry.score = score
             score_entry.save()
 
-            # Update the user's profile highest score if needed
             profile = Profile.objects.get(user=request.user)
             if score > profile.highest_score:
                 profile.highest_score = score
