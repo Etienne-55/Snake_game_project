@@ -16,12 +16,5 @@ class Score(models.Model):
         return f"{self.user.username} - {self.score}"
 
     class Meta:
-        ordering = ['-score']  # Order by score in descending order
+        ordering = ['-score']  
 
-class Coffee(models.Model):
-    name = models.CharField(max_length=100)
-    origin = models.CharField(max_length=100)
-    roast_type = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name

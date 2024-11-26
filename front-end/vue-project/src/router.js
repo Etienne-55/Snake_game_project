@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HelloWorld from './components/HelloWorld.vue';
+import HelloWorld from './components/MainMenu.vue';
 import SignIn from './components/SignIn.vue';
-import LogedIn from './components/LogedIn.vue';
-import CoffeeForm from './components/CoffeeForm.vue'
+import LogedIn from './components/RankPage.vue';
+import CoffeeForm from './components/GamePage.vue'
 
 const routes = [
   { path: '/', component: HelloWorld },
