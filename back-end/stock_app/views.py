@@ -68,7 +68,7 @@ def login(request):
 
 class HelloWorld(APIView):
     def get(self, request):
-        return Response({"message": "Welcome to the snake game :)"}, status=status.HTTP_200_OK)
+        return Response({"message": "Ranked snake game"}, status=status.HTTP_200_OK)
 
 class Hello(APIView):
     def get(self, request):
